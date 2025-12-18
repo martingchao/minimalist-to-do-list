@@ -27,6 +27,13 @@ git push -u origin main
 3. Import your GitHub repository
 4. Vercel will automatically detect the project structure
 
+**CRITICAL - Root Directory Setting:**
+- Go to **Settings → General → Root Directory**
+- **MUST be set to `.` (empty/root)** - DO NOT set it to `frontend`
+- If Root Directory is set to `frontend`, the API serverless functions in the `api/` folder won't be accessible
+- The `vercel.json` file handles all build configuration automatically
+- After setting Root Directory to `.`, click **Save** and redeploy
+
 ### 3. Set Up PostgreSQL Database
 
 #### Option A: Vercel Postgres (Recommended)
