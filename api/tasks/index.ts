@@ -45,15 +45,49 @@ function getUserId(req: VercelRequest): number | null {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // #region agent log
-  console.log('[DEBUG] Tasks index handler called:', {method:req.method,url:req.url,query:req.query});
+  console.log('[DEBUG] Tasks index handler called:', {
+    method: req.method,
+    url: req.url,
+    path: req.url,
+    query: req.query,
+    hasIdInQuery: !!req.query.id,
+    headers: { 'x-vercel-path': req.headers['x-vercel-path'] }
+  });
   // #endregion
 
-  // If the URL has a path segment after /tasks, this shouldn't be handled here
-  // Vercel should route /api/tasks/:id to [id].ts, but if it doesn't, return 404
-  const urlPath = req.url || '';
-  if (urlPath.match(/^\/api\/tasks\/\d+$/)) {
+  // Check if this is a request that should go to [id].ts
+  // Vercel dynamic routes put the parameter in req.query
+  const urlPath = req.url || req.headers['x-vercel-path'] || '';
+  const hasIdInPath = /\/(tasks|api\/tasks)\/\d+/.test(urlPath);
+  const hasIdInQuery = !!req.query.id;
+  
+  // For PUT/DELETE methods, if there's an ID anywhere, this should go to [id].ts
+  if ((req.method === 'PUT' || req.method === 'DELETE') && (hasIdInPath || hasIdInQuery)) {
     // #region agent log
-    console.error('[DEBUG] Tasks index received request that should go to [id].ts:', {url:req.url});
+    console.error('[DEBUG] Tasks index received PUT/DELETE with ID - should go to [id].ts:', {
+      url: req.url,
+      vercelPath: req.headers['x-vercel-path'],
+      hasIdInPath,
+      hasIdInQuery,
+      query: req.query,
+      method: req.method
+    });
+    // #endregion
+    // Return 404 to indicate this route doesn't exist here
+    return res.status(404).json({ error: 'Route not found - should be handled by [id].ts' });
+  }
+  
+  // Also check for GET requests with ID (though they should route correctly)
+  if (hasIdInPath || hasIdInQuery) {
+    // #region agent log
+    console.error('[DEBUG] Tasks index received request with ID - should go to [id].ts:', {
+      url: req.url,
+      vercelPath: req.headers['x-vercel-path'],
+      hasIdInPath,
+      hasIdInQuery,
+      query: req.query,
+      method: req.method
+    });
     // #endregion
     return res.status(404).json({ error: 'Route not found - should be handled by [id].ts' });
   }
