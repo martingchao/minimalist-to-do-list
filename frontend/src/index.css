@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,10 +6,11 @@
 
 body {
   margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Outfit', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f2e8;
+  background: linear-gradient(135deg, #0d3311 0%, #1b5e20 25%, #2e7d32 50%, #388e3c 75%, #43a047 100%);
+  background-attachment: fixed;
   min-height: 100vh;
 }
 
@@ -17,3 +18,46 @@ body {
   box-sizing: border-box;
 }
 
+/* Custom scrollbar with green theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1b5e20;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #66bb6a;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #81c784;
+}
+
+/* Green checkbox styling */
+input[type="checkbox"] {
+  accent-color: #4caf50;
+}
+
+/* Green date input styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(48%) sepia(79%) saturate(2476%) hue-rotate(86deg) brightness(95%) contrast(87%);
+}
+
+/* Animated background pattern */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(102, 187, 106, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(129, 199, 132, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 40% 80%, rgba(165, 214, 167, 0.08) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}

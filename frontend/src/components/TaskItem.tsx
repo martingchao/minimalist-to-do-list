@@ -35,16 +35,22 @@ export default function TaskItem({ task, onToggleComplete, onDelete, onUpdate }:
   const isOverdue = task.due_date && !task.completed && new Date(task.due_date) < new Date();
 
   return (
-    <div className="flex items-start gap-3 group">
+    <div className={`flex items-start gap-3 group p-3 rounded-xl transition-all duration-300 ${
+      task.completed 
+        ? 'bg-forest-950/30 opacity-70' 
+        : 'bg-forest-900/40 hover:bg-forest-800/50 hover:shadow-green-glow'
+    } border border-forest-600/20`}>
       <button
         onClick={() => onToggleComplete(task)}
-        className={`mt-1 w-5 h-5 border-2 border-black flex-shrink-0 flex items-center justify-center ${
-          task.completed ? 'bg-black' : 'bg-white'
+        className={`mt-0.5 w-6 h-6 border-2 rounded-md flex-shrink-0 flex items-center justify-center transition-all duration-300 ${
+          task.completed 
+            ? 'bg-forest-500 border-forest-400 shadow-green-glow' 
+            : 'bg-forest-950/50 border-forest-500 hover:border-mint hover:bg-forest-800'
         }`}
         aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
       >
         {task.completed && (
-          <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
           </svg>
         )}
@@ -57,49 +63,53 @@ export default function TaskItem({ task, onToggleComplete, onDelete, onUpdate }:
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-2 py-1 border-b border-gray-400 bg-transparent focus:outline-none focus:border-black"
+              className="w-full px-3 py-1 border-b-2 border-forest-500 bg-forest-950/50 focus:outline-none focus:border-mint text-forest-100 rounded transition-colors"
               autoFocus
             />
-            <div className="flex gap-2 items-center">
+            <div className="flex gap-3 items-center">
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                className="px-2 py-1 border-b border-gray-400 bg-transparent focus:outline-none focus:border-black text-sm"
+                className="px-3 py-1 border-b-2 border-forest-500 bg-forest-950/50 focus:outline-none focus:border-mint text-sm text-forest-200 rounded transition-colors"
               />
               <button
                 onClick={handleSave}
-                className="text-sm text-gray-600 hover:text-black underline"
+                className="text-sm text-mint hover:text-forest-200 font-medium transition-colors"
               >
-                Save
+                ✓ Save
               </button>
               <button
                 onClick={handleCancel}
-                className="text-sm text-gray-600 hover:text-black underline"
+                className="text-sm text-forest-400 hover:text-forest-200 transition-colors"
               >
-                Cancel
+                ✕ Cancel
               </button>
             </div>
           </div>
         ) : (
           <div className="flex items-center gap-3">
             <div
-              className={`flex-1 cursor-pointer ${task.completed ? 'line-through text-gray-500' : ''}`}
+              className={`flex-1 cursor-pointer ${task.completed ? 'line-through text-forest-500' : 'text-forest-100'}`}
               onClick={() => setIsEditing(true)}
             >
               <span>{task.description}</span>
               {task.due_date && (
-                <span className={`ml-3 text-sm ${isOverdue ? 'text-red-600' : 'text-gray-500'}`}>
-                  {formatDate(task.due_date)}
-                  {isOverdue && ' (overdue)'}
+                <span className={`ml-3 text-sm px-2 py-0.5 rounded-full ${
+                  isOverdue 
+                    ? 'text-red-300 bg-red-900/40 border border-red-500/30' 
+                    : 'text-forest-300 bg-forest-800/50'
+                }`}>
+                  📅 {formatDate(task.due_date)}
+                  {isOverdue && ' ⚠️'}
                 </span>
               )}
             </div>
             <button
               onClick={() => onDelete(task.id)}
-              className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-black text-sm transition-opacity"
+              className="opacity-0 group-hover:opacity-100 text-forest-500 hover:text-red-400 text-sm transition-all duration-200 px-2 py-1 rounded hover:bg-red-900/30"
             >
-              Delete
+              🗑️ Delete
             </button>
           </div>
         )}
@@ -107,4 +117,3 @@ export default function TaskItem({ task, onToggleComplete, onDelete, onUpdate }:
     </div>
   );
 }
-
