@@ -4,12 +4,30 @@ import jwt from 'jsonwebtoken';
 import pg from 'pg';
 const { Pool } = pg;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('supabase') || process.env.DATABASE_URL?.includes('neon') || process.env.DATABASE_URL?.includes('railway') || process.env.NODE_ENV === 'production' 
-    ? { rejectUnauthorized: false } 
-    : false,
-});
+// Create pool with proper SSL configuration for Supabase
+const getPoolConfig = () => {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    return null;
+  }
+
+  const isSupabase = connectionString.includes('supabase');
+  const isNeon = connectionString.includes('neon');
+  const isRailway = connectionString.includes('railway');
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  return {
+    connectionString,
+    ssl: isSupabase || isNeon || isRailway || isProduction
+      ? { rejectUnauthorized: false }
+      : false,
+    // For Supabase connection pooling, set max connections
+    max: isSupabase ? 1 : undefined,
+  };
+};
+
+const poolConfig = getPoolConfig();
+const pool = poolConfig ? new Pool(poolConfig) : null;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -25,6 +43,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!process.env.JWT_SECRET) {
     console.error('JWT_SECRET is not set');
     return res.status(500).json({ error: 'JWT configuration error' });
+  }
+
+  if (!pool) {
+    console.error('Database pool not initialized');
+    return res.status(500).json({ error: 'Database configuration error' });
   }
 
   try {

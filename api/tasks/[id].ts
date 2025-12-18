@@ -3,12 +3,30 @@ import jwt from 'jsonwebtoken';
 import pg from 'pg';
 const { Pool } = pg;
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes('supabase') || process.env.DATABASE_URL?.includes('neon') || process.env.DATABASE_URL?.includes('railway') || process.env.NODE_ENV === 'production' 
-    ? { rejectUnauthorized: false } 
-    : false,
-});
+// Create pool with proper SSL configuration for Supabase
+const getPoolConfig = () => {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    return null;
+  }
+
+  const isSupabase = connectionString.includes('supabase');
+  const isNeon = connectionString.includes('neon');
+  const isRailway = connectionString.includes('railway');
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  return {
+    connectionString,
+    ssl: isSupabase || isNeon || isRailway || isProduction
+      ? { rejectUnauthorized: false }
+      : false,
+    // For Supabase connection pooling, set max connections
+    max: isSupabase ? 1 : undefined,
+  };
+};
+
+const poolConfig = getPoolConfig();
+const pool = poolConfig ? new Pool(poolConfig) : null;
 
 function getUserId(req: VercelRequest): number | null {
   const authHeader = req.headers['authorization'];
@@ -26,6 +44,11 @@ function getUserId(req: VercelRequest): number | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (!pool) {
+    console.error('Database pool not initialized');
+    return res.status(500).json({ error: 'Database configuration error' });
+  }
+
   const userId = getUserId(req);
   if (!userId) {
     return res.status(401).json({ error: 'Access token required' });
