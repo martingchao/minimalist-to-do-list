@@ -41,9 +41,10 @@ export default function Tasks() {
     try {
       const updatedTask = await updateTask(task.id, { completed: !task.completed });
       setTasks(tasks.map(t => t.id === task.id ? updatedTask : t));
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update task:', error);
-      alert('Failed to update task');
+      const errorMessage = error?.response?.data?.error || error?.message || 'Failed to update task';
+      alert(errorMessage);
     }
   };
 

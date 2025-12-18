@@ -44,6 +44,10 @@ function getUserId(req: VercelRequest): number | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // #region agent log
+  console.log('[DEBUG] Task [id] handler called:', {method:req.method,query:req.query,hasBody:!!req.body});
+  // #endregion
+
   if (!pool) {
     console.error('Database pool not initialized');
     return res.status(500).json({ error: 'Database configuration error' });
@@ -51,10 +55,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const userId = getUserId(req);
   if (!userId) {
+    // #region agent log
+    console.error('[DEBUG] No userId from token');
+    // #endregion
     return res.status(401).json({ error: 'Access token required' });
   }
 
   const taskId = parseInt(req.query.id as string);
+  
+  // #region agent log
+  console.log('[DEBUG] Parsed taskId:', {taskId,rawId:req.query.id,userId});
+  // #endregion
+
+  if (isNaN(taskId)) {
+    // #region agent log
+    console.error('[DEBUG] Invalid taskId:', {rawId:req.query.id});
+    // #endregion
+    return res.status(400).json({ error: 'Invalid task ID' });
+  }
 
   if (req.method === 'PUT') {
     try {
@@ -129,7 +147,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // #region agent log
       console.error('[DEBUG] Update task error details:', {errorCode:error?.code,errorMessage:error?.message,errorName:error?.name,stack:error?.stack?.substring(0,500)});
       // #endregion
-      res.status(500).json({ error: 'Internal server error' });
+      
+      // Return more detailed error in development, generic in production
+      const errorMessage = process.env.NODE_ENV === 'production' 
+        ? 'Internal server error' 
+        : error?.message || 'Internal server error';
+      res.status(500).json({ error: errorMessage });
     }
   } else if (req.method === 'DELETE') {
     try {
