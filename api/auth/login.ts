@@ -16,6 +16,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Check environment variables
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL is not set');
+    return res.status(500).json({ error: 'Database configuration error' });
+  }
+
+  if (!process.env.JWT_SECRET) {
+    console.error('JWT_SECRET is not set');
+    return res.status(500).json({ error: 'JWT configuration error' });
+  }
+
   try {
     const { email, password } = req.body;
 
@@ -47,9 +58,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const token = jwt.sign({ userId: user.id }, secret, { expiresIn: '7d' });
 
     res.json({ token, user: { id: user.id, email: user.email } });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    // Log more details in development
+    const errorMessage = process.env.NODE_ENV === 'production' 
+      ? 'Internal server error' 
+      : error?.message || 'Internal server error';
+    res.status(500).json({ error: errorMessage });
   }
 }
 
