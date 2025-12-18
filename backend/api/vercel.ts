@@ -1,0 +1,5 @@
+// Vercel serverless function handler
+import app from './index.js';
+
+export default app;
+
