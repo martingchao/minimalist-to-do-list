@@ -60,6 +60,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     try {
       const { description, due_date, completed } = req.body;
 
+      // #region agent log
+      console.log('[DEBUG] Update task request:', {taskId,userId,body:{description:description!==undefined,due_date:due_date!==undefined,completed:completed!==undefined}});
+      // #endregion
+
       // Verify task belongs to user
       const taskCheck = await pool.query(
         'SELECT id FROM tasks WHERE id = $1 AND user_id = $2',
@@ -67,6 +71,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       );
 
       if (taskCheck.rows.length === 0) {
+        // #region agent log
+        console.error('[DEBUG] Task not found or doesn\'t belong to user:', {taskId,userId});
+        // #endregion
         return res.status(404).json({ error: 'Task not found' });
       }
 
@@ -91,20 +98,37 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (updates.length === 0) {
+        // #region agent log
+        console.error('[DEBUG] No fields to update');
+        // #endregion
         return res.status(400).json({ error: 'No fields to update' });
       }
 
       updates.push(`updated_at = CURRENT_TIMESTAMP`);
+      
+      // Add taskId and userId to values, using consecutive parameter numbers
+      const taskIdParam = paramCount;
+      const userIdParam = paramCount + 1;
       values.push(taskId, userId);
 
-      const result = await pool.query(
-        `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${paramCount++} AND user_id = $${paramCount++} RETURNING *`,
-        values
-      );
+      const query = `UPDATE tasks SET ${updates.join(', ')} WHERE id = $${taskIdParam} AND user_id = $${userIdParam} RETURNING *`;
+      
+      // #region agent log
+      console.log('[DEBUG] Executing update query:', {query,values,paramCount,taskIdParam,userIdParam});
+      // #endregion
+
+      const result = await pool.query(query, values);
+
+      // #region agent log
+      console.log('[DEBUG] Update successful:', {rowsUpdated:result.rows.length});
+      // #endregion
 
       res.json(result.rows[0]);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Update task error:', error);
+      // #region agent log
+      console.error('[DEBUG] Update task error details:', {errorCode:error?.code,errorMessage:error?.message,errorName:error?.name,stack:error?.stack?.substring(0,500)});
+      // #endregion
       res.status(500).json({ error: 'Internal server error' });
     }
   } else if (req.method === 'DELETE') {
