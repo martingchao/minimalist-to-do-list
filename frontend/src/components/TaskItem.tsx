@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Task, updateTask } from '../api/tasks';
+import { Task } from '../api/tasks';
 
 interface TaskItemProps {
   task: Task;
