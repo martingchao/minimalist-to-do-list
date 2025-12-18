@@ -44,8 +44,14 @@ function getUserId(req: VercelRequest): number | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   // #region agent log
-  console.log('[DEBUG] Task [id] handler called:', {method:req.method,query:req.query,hasBody:!!req.body});
+  console.log('[DEBUG] Task [id] handler called:', {method:req.method,url:req.url,query:req.query,hasBody:!!req.body,body:req.body});
   // #endregion
 
   if (!pool) {
@@ -171,7 +177,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ error: 'Internal server error' });
     }
   } else {
-    res.status(405).json({ error: 'Method not allowed' });
+    // #region agent log
+    console.error('[DEBUG] Method not allowed:', {method:req.method,allowedMethods:['PUT','DELETE']});
+    // #endregion
+    res.status(405).json({ error: `Method ${req.method} not allowed. Use PUT or DELETE.` });
   }
 }
 

@@ -44,6 +44,20 @@ function getUserId(req: VercelRequest): number | null {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // #region agent log
+  console.log('[DEBUG] Tasks index handler called:', {method:req.method,url:req.url,query:req.query});
+  // #endregion
+
+  // If the URL has a path segment after /tasks, this shouldn't be handled here
+  // Vercel should route /api/tasks/:id to [id].ts, but if it doesn't, return 404
+  const urlPath = req.url || '';
+  if (urlPath.match(/^\/api\/tasks\/\d+$/)) {
+    // #region agent log
+    console.error('[DEBUG] Tasks index received request that should go to [id].ts:', {url:req.url});
+    // #endregion
+    return res.status(404).json({ error: 'Route not found - should be handled by [id].ts' });
+  }
+
   if (!pool) {
     console.error('Database pool not initialized');
     return res.status(500).json({ error: 'Database configuration error' });
